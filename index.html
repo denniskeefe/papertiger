@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Papertiger Site Generator</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1b1f24; --muted:#5b6570; --line:#dde1e6; --accent:#2b5cff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#111418; --card:#1a1f25; --ink:#e8ebef; --muted:#9aa5b1; --line:#2c333b; --accent:#6b8cff; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width:1100px; margin:0 auto; padding:32px 16px 64px; display:grid; gap:24px; grid-template-columns:minmax(0,380px) minmax(0,1fr); }
+  @media (max-width:820px) { main { grid-template-columns:1fr; } }
+  h1 { font-size:1.4rem; margin:0 0 4px; }
+  p.sub { margin:0 0 20px; color:var(--muted); font-size:.9rem; }
+  form, .preview { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:20px; }
+  label { display:block; font-size:.85rem; font-weight:600; margin:14px 0 4px; }
+  label small { font-weight:400; color:var(--muted); }
+  input[type=text], input[type=email], input:not([type]), select { width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--ink); font:inherit; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  fieldset { border:1px solid var(--line); border-radius:6px; margin:18px 0 0; padding:6px 12px 12px; }
+  legend { font-size:.85rem; font-weight:600; padding:0 6px; }
+  .pages { display:grid; grid-template-columns:1fr 1fr; gap:2px 12px; }
+  .pages label { display:flex; align-items:center; gap:8px; font-weight:400; margin:6px 0 0; cursor:pointer; }
+  .pages label.locked { color:var(--muted); cursor:default; }
+  .pages input { width:auto; margin:0; }
+  button { margin-top:20px; padding:10px 16px; border:0; border-radius:6px; background:var(--accent); color:#fff; font:inherit; font-weight:600; cursor:pointer; }
+  button.secondary { background:transparent; color:var(--accent); border:1px solid var(--accent); margin-left:8px; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  .tabs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+  .tabs button { margin:0; padding:5px 12px; font-size:.85rem; background:transparent; color:var(--muted); border:1px solid var(--line); }
+  .tabs button.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  iframe { width:100%; height:620px; border:1px solid var(--line); border-radius:6px; background:#fff; }
+  .empty { color:var(--muted); padding:40px 0; text-align:center; }
+  .note { font-size:.8rem; color:var(--muted); margin-top:16px; }
+  #deploy { margin-top:20px; padding-top:16px; border-top:1px solid var(--line); }
+  #deploy h2 { font-size:1.05rem; margin:0 0 4px; }
+  #deploy .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  @media (max-width:560px) { #deploy .row3 { grid-template-columns:1fr; } }
+  #deploy label.chk { display:flex; align-items:center; gap:8px; font-weight:400; }
+  #deploy label.chk input { width:auto; margin:0; }
+  pre { background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:10px; overflow-x:auto; font-size:.8rem; margin:6px 0 0; white-space:pre-wrap; word-break:break-all; }
+  .err { color:#c0392b; font-size:.85rem; margin-top:8px; }
+  #deploy button { margin-top:10px; padding:6px 12px; font-size:.85rem; }
+  ol.steps { padding-left:20px; margin:12px 0; }
+  ol.steps li { margin-bottom:14px; }
+  details { margin-top:12px; }
+  summary { cursor:pointer; font-size:.9rem; color:var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <section>
+    <form id="f">
+      <h1>Site Generator</h1>
+      <p class="sub">Answer a few questions. Get a small static landing page.</p>
+
+      <label for="name">Company name</label>
+      <input id="name" required maxlength="60" placeholder="e.g. Northgate Holdings">
+
+      <div class="row">
+        <div>
+          <label for="city">City</label>
+          <input id="city" required maxlength="60" placeholder="Austin">
+        </div>
+        <div>
+          <label for="region">State / Region</label>
+          <input id="region" maxlength="60" placeholder="TX">
+        </div>
+      </div>
+
+      <label for="country">Country <small>(optional)</small></label>
+      <input id="country" maxlength="60" placeholder="United States">
+
+      <label for="email">Contact email</label>
+      <input id="email" type="email" required placeholder="contact@yourdomain.com">
+
+      <div class="row">
+        <div>
+          <label for="template">Style</label>
+          <select id="template">
+            <option value="slate">Slate</option>
+            <option value="sand">Sand</option>
+            <option value="forest">Forest</option>
+            <option value="ink">Ink (dark)</option>
+          </select>
+        </div>
+        <div>
+          <label for="suffix">Name suffix</label>
+          <select id="suffix">
+            <option value="">None</option>
+            <option>LLC</option><option>Inc.</option><option>Ltd.</option><option>Group</option><option>Partners</option>
+          </select>
+        </div>
+      </div>
+
+      <fieldset>
+        <legend>Pages to include</legend>
+        <div class="pages" id="pages"></div>
+      </fieldset>
+
+      <button type="submit">Generate</button>
+      <button type="button" class="secondary" id="dl" disabled>Download ZIP</button>
+
+      <p class="note">Output is generic placeholder copy. It makes no claims about licenses, certifications, clients, or registrations, and it does not generate testimonials or team bios. Use only for lawful, authorized work.</p>
+    </form>
+  </section>
+
+  <section class="preview">
+    <div id="empty" class="empty">Preview appears here.</div>
+    <div id="tabs" class="tabs" hidden></div>
+    <iframe id="frame" title="Preview" hidden sandbox></iframe>
+
+    <div id="deploy" hidden>
+      <h2>Put it online</h2>
+      <p class="sub">You need a Debian or Ubuntu web server and its login details. Nothing you type here leaves your computer.</p>
+      <ol class="steps">
+        <li>Download your deploy file. It contains the site and the installer in one file.
+          <div><button type="button" id="dGet">Download deploy file</button></div></li>
+        <li>Open <b>Terminal</b> (Mac: press Cmd+Space, type Terminal, press Enter), paste this line, and press Enter:
+          <pre id="dRun"></pre>
+          <button type="button" class="secondary" id="dRunCopy" style="margin-left:0">Copy</button></li>
+        <li>Answer the questions: server address, username, and optionally a domain. Leave the domain blank to get a free test address. When you type a password nothing appears on screen; that is normal.</li>
+      </ol>
+      <details><summary>Need a server?</summary>
+        <p class="note">Any basic Debian or Ubuntu virtual server from a hosting provider works. After you create one, the provider shows its IP address and a root password (or lets you add an SSH key). Use those when the deploy file asks. Works on Mac and Linux; on Windows use WSL.</p>
+      </details>
+      <details><summary>Advanced: run the steps manually</summary>
+      <p class="sub" style="margin-top:10px">Upload the ZIP and the script yourself with the commands below.</p>
+      <div class="row3">
+        <div><label for="dTarget">SSH target</label><input id="dTarget" placeholder="user@203.0.113.10"></div>
+        <div><label for="dDomain">Domain</label><input id="dDomain" placeholder="example.com"></div>
+        <div><label for="dEmail">Email (HTTPS)</label><input id="dEmail" type="email" placeholder="you@example.com"></div>
+      </div>
+      <label class="chk" style="margin-top:12px"><input type="checkbox" id="dSsl" checked> Enable HTTPS (Let's Encrypt). DNS must already point at the server.</label>
+      <div id="dErr" class="err" hidden></div>
+      <pre id="dCmd"></pre>
+      <button type="button" id="dCopy">Copy commands</button>
+      <button type="button" class="secondary" id="dScript">Download deploy.sh</button>
+      <p class="note">Requires a Debian/Ubuntu server with sudo access. The script is not included in the site ZIP, so it never gets published.</p>
+      </details>
+    </div>
+  </section>
+</main>
+
+<script type="text/plain" id="wizard-sh">#!/usr/bin/env bash
+# Self-contained deploy file for __SLUG__ (website + installer).
+# Run it with:  bash deploy-__SLUG__.sh
+set -euo pipefail
+SLUG="__SLUG__"
+SELF="$0"
+die() { printf 'Error: %s\n' "$*" >&2; exit 1; }
+command -v ssh >/dev/null && command -v scp >/dev/null || die "ssh and scp are required (included with macOS and Linux)."
+
+echo
+echo "Deploy $SLUG to your web server"
+echo "You need: a Debian/Ubuntu server, its IP address, and its login password or SSH key."
+echo
+
+read -r -p "Server IP address or hostname: " HOST
+[[ "$HOST" =~ ^[A-Za-z0-9.-]+$ ]] || die "That does not look like an IP address or hostname."
+read -r -p "Login username [root]: " USERNAME
+USERNAME="${USERNAME:-root}"
+[[ "$USERNAME" =~ ^[a-z_][a-z0-9_-]*$ ]] || die "Invalid username."
+
+IS_IP=0
+[[ "$HOST" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] && IS_IP=1
+DOMAIN=""; EMAIL=""
+read -r -p "Domain name (leave blank for a free test address): " DOMAIN
+if [[ -z "$DOMAIN" ]]; then
+  [[ $IS_IP -eq 1 ]] || die "Please enter the domain name for this server."
+  LABEL="${SLUG:0:40}"; LABEL="${LABEL%-}"
+  DOMAIN="$LABEL.$HOST.nip.io"
+  echo "Using free test address: $DOMAIN (plain http, no HTTPS)"
+else
+  [[ "$DOMAIN" =~ ^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$ ]] || die "That does not look like a valid domain name."
+  echo "Make sure $DOMAIN already points to $HOST in your DNS settings."
+  read -r -p "Email for a free HTTPS certificate (blank = skip HTTPS): " EMAIL
+  if [[ -n "$EMAIL" ]]; then
+    [[ "$EMAIL" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]] || die "That does not look like a valid email address."
+  fi
+fi
+
+WORK="$(mktemp -d)"
+SOCK="/tmp/pt-$$.sock"
+SSH_OPTS=(-o ControlMaster=auto -o "ControlPath=$SOCK" -o ControlPersist=300 -o StrictHostKeyChecking=accept-new)
+cleanup() { ssh -O exit "${SSH_OPTS[@]}" "$USERNAME@$HOST" >/dev/null 2>&1 || true; rm -rf "$WORK" "$SOCK"; }
+trap cleanup EXIT
+
+# Unpack the installer and the website from the end of this file.
+sed -n '/^#__REMOTE_BEGIN__$/,/^#__ZIP_BEGIN__$/p' "$SELF" | sed '1d;$d' > "$WORK/deploy.sh"
+if echo | base64 -d >/dev/null 2>&1; then B64D="-d"; else B64D="-D"; fi
+sed -n '/^#__ZIP_BEGIN__$/,$p' "$SELF" | sed '1d' | base64 $B64D > "$WORK/$SLUG.zip"
+[[ -s "$WORK/deploy.sh" && -s "$WORK/$SLUG.zip" ]] || die "This file looks damaged. Please download it again."
+
+echo
+echo "Connecting to $USERNAME@$HOST (you may be asked for your password)..."
+RDIR="$(ssh "${SSH_OPTS[@]}" "$USERNAME@$HOST" 'mktemp -d')" || die "Could not connect. Check the address, username and password."
+[[ "$RDIR" =~ ^/[A-Za-z0-9._/-]+$ ]] || die "Unexpected response from the server."
+scp -q "${SSH_OPTS[@]}" "$WORK/deploy.sh" "$WORK/$SLUG.zip" "$USERNAME@$HOST:$RDIR/" || die "Upload failed."
+
+ARGS="-z $SLUG.zip -d $DOMAIN"
+SCHEME="http"
+if [[ -n "$EMAIL" ]]; then ARGS="$ARGS -e $EMAIL -s"; SCHEME="https"; fi
+SUDO=""; [[ "$USERNAME" != "root" ]] && SUDO="sudo "
+
+echo "Installing (this takes a minute)..."
+ssh -t "${SSH_OPTS[@]}" "$USERNAME@$HOST" "cd $RDIR && ${SUDO}bash deploy.sh $ARGS; rc=\$?; cd / && rm -rf $RDIR; exit \$rc" || die "Deployment failed. See the messages above."
+
+echo
+echo "All done! Your site is live at: $SCHEME://$DOMAIN"
+exit 0
+</script>
+<script type="text/plain" id="deploy-sh">
+#!/usr/bin/env bash
+#
+# deploy.sh - Deploy a generated static site ZIP to an Apache (LAMP) server.
+#
+# Usage:
+#   sudo ./deploy.sh -z site.zip -d example.com [-e admin@example.com] [-s]
+#
+# Options:
+#   -z  Path to the ZIP produced by the generator (required)
+#   -d  Domain name to serve, e.g. example.com (required)
+#   -e  Email for Let's Encrypt registration (required with -s)
+#   -s  Obtain and install a free HTTPS certificate via certbot
+#   -h  Show this help
+#
+# Targets Debian/Ubuntu (apache2, a2ensite). Re-running updates the site in place.
+
+set -euo pipefail
+
+ZIP=""; DOMAIN=""; EMAIL=""; SSL=0
+
+usage() { sed -n '3,17p' "$0" | sed 's/^# \{0,1\}//'; }
+die()   { echo "Error: $*" >&2; exit 1; }
+
+while getopts "z:d:e:sh" opt; do
+  case "$opt" in
+    z) ZIP="$OPTARG" ;;
+    d) DOMAIN="$OPTARG" ;;
+    e) EMAIL="$OPTARG" ;;
+    s) SSL=1 ;;
+    h) usage; exit 0 ;;
+    *) usage; exit 1 ;;
+  esac
+done
+
+[[ $EUID -eq 0 ]]   || die "Run as root (use sudo)."
+[[ -n "$ZIP" ]]     || { usage; die "-z is required."; }
+[[ -f "$ZIP" ]]     || die "ZIP not found: $ZIP"
+[[ -n "$DOMAIN" ]]  || { usage; die "-d is required."; }
+[[ "$DOMAIN" =~ ^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$ ]] || die "Invalid domain: $DOMAIN"
+if [[ $SSL -eq 1 ]]; then
+  [[ -n "$EMAIL" ]] || die "-e is required with -s."
+  [[ "$EMAIL" =~ ^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$ ]] || die "Invalid email: $EMAIL"
+fi
+command -v apt-get >/dev/null || die "This script supports Debian/Ubuntu only."
+
+WEBROOT="/var/www/$DOMAIN"
+CONF="/etc/apache2/sites-available/$DOMAIN.conf"
+
+echo "==> Installing packages"
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -qq
+apt-get install -y -qq apache2 unzip >/dev/null
+if [[ $SSL -eq 1 ]]; then
+  apt-get install -y -qq certbot python3-certbot-apache >/dev/null
+fi
+
+echo "==> Extracting site to $WEBROOT"
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+unzip -q -o "$ZIP" -d "$TMP"
+[[ -f "$TMP/index.html" ]] || die "ZIP does not contain index.html at its top level."
+
+mkdir -p "$WEBROOT"
+# Replace contents atomically-ish: clear old files, copy new ones.
+find "$WEBROOT" -mindepth 1 -delete
+cp -a "$TMP"/. "$WEBROOT"/
+chown -R www-data:www-data "$WEBROOT"
+find "$WEBROOT" -type d -exec chmod 755 {} +
+find "$WEBROOT" -type f -exec chmod 644 {} +
+
+echo "==> Writing Apache vhost"
+a2enmod headers >/dev/null
+cat > "$CONF" <<EOF
+<VirtualHost *:80>
+    ServerName $DOMAIN
+    ServerAlias www.$DOMAIN
+    DocumentRoot $WEBROOT
+
+    <Directory $WEBROOT>
+        Options -Indexes -FollowSymLinks
+        AllowOverride None
+        Require all granted
+    </Directory>
+
+    ServerSignature Off
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    ErrorLog \${APACHE_LOG_DIR}/$DOMAIN-error.log
+    CustomLog \${APACHE_LOG_DIR}/$DOMAIN-access.log combined
+</VirtualHost>
+EOF
+
+a2ensite "$DOMAIN.conf" >/dev/null
+apache2ctl configtest
+systemctl reload apache2
+
+if [[ $SSL -eq 1 ]]; then
+  echo "==> Requesting HTTPS certificate (DNS for $DOMAIN must already point to this server)"
+  certbot --apache --non-interactive --agree-tos --redirect \
+    -m "$EMAIL" -d "$DOMAIN" -d "www.$DOMAIN"
+fi
+
+echo
+echo "Done. Site deployed to $WEBROOT"
+echo "Visit: http$([[ $SSL -eq 1 ]] && echo s)://$DOMAIN"
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+const THEMES = {
+  slate:  { bg:"#f4f6f8", ink:"#1c2430", muted:"#5a6675", accent:"#34495e", card:"#ffffff", line:"#dfe4ea" },
+  sand:   { bg:"#faf6ef", ink:"#2b2620", muted:"#6f665a", accent:"#a0713b", card:"#ffffff", line:"#e7dfd0" },
+  forest: { bg:"#f3f7f4", ink:"#1b2a22", muted:"#54675c", accent:"#2f6b4f", card:"#ffffff", line:"#d9e5dd" },
+  ink:    { bg:"#12151a", ink:"#e9edf2", muted:"#98a3b0", accent:"#8fb0ff", card:"#1a1f27", line:"#2a313b" }
+};
+
+// Deliberately generic copy with no factual claims.
+const TAGLINES = ["Thoughtful solutions. Lasting relationships.", "Built on trust. Guided by precision.", "Quietly effective.", "Clarity in a complex world."];
+const ABOUT = [
+  "We work with a select group of partners on a project basis.",
+  "Our approach is deliberate, discreet, and tailored to each engagement.",
+  "Most of our work happens by referral."
+];
+const VALUES = [
+  ["Discretion", "We value confidentiality and handle every matter with care."],
+  ["Precision", "Details matter. We take the time to get them right."],
+  ["Partnership", "Long-term relationships over short-term transactions."]
+];
+const SERVICES = [
+  ["Advisory", "Guidance tailored to the needs of each engagement."],
+  ["Coordination", "Organizing people, information, and timelines."],
+  ["Research", "Careful, structured review of the questions that matter."]
+];
+const FAQ = [
+  ["How do I get in touch?", "Please send a written inquiry by email. We read every message."],
+  ["Do you take on new engagements?", "Occasionally. Availability varies, so please ask."],
+  ["How quickly do you respond?", "We aim to reply within a few business days."],
+  ["Do you accept unsolicited proposals?", "We review them, but cannot reply to every one."]
+];
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pick = (arr, seed) => arr[seed % arr.length];
+const hash = s => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+const cards = list => `<div class="grid">${list.map(([a, b]) => `<div class="card"><h3>${esc(a)}</h3><p>${esc(b)}</p></div>`).join("")}</div>`;
+
+// Selectable pages. "home" is always included.
+// Intentionally no Testimonials or Team page: those would require inventing people or customer quotes.
+const PAGES = [
+  { id:"about",    label:"About",             def:true,  title:"About",           body:c => `<section><h2>About</h2>${ABOUT.map(p => `<p>${esc(p)}</p>`).join("")}</section>` },
+  { id:"approach", label:"Approach",          def:false, title:"Approach",        body:c => `<section><h2>Principles</h2>${cards(VALUES)}</section>` },
+  { id:"services", label:"Services",          def:false, title:"Services",        body:c => `<section><h2>Areas of work</h2>${cards(SERVICES)}<p style="margin-top:18px">Engagements are scoped individually. Please get in touch to discuss.</p></section>` },
+  { id:"faq",      label:"FAQ",               def:false, title:"FAQ",             body:c => `<section><h2>Questions</h2>${FAQ.map(([q, a]) => `<h3 style="margin:18px 0 4px">${esc(q)}</h3><p style="margin:0;color:var(--muted)">${esc(a)}</p>`).join("")}</section>` },
+  { id:"contact",  label:"Contact",           def:true,  title:"Contact",         body:c => `<section><h2>Email</h2><p><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></p></section>${c.locFull ? `<section><h2>Location</h2><p>${esc(c.locFull)}</p></section>` : ""}` },
+  { id:"privacy",  label:"Privacy Policy",    def:false, title:"Privacy Policy",  body:c => `<section><h2>Privacy Policy</h2><p>${esc(c.full)} collects only the information you choose to send us, such as your name and email address when you write to us.</p><p>We use it to respond to your inquiry. We do not run advertising or analytics on this site.</p><p>To ask about your information, write to <a href="mailto:${esc(c.email)}">${esc(c.email)}</a>.</p></section>` },
+  { id:"terms",    label:"Terms of Use",      def:false, title:"Terms of Use",    body:c => `<section><h2>Terms of Use</h2><p>This website is provided for general information only and does not constitute an offer or professional advice.</p><p>Content may change without notice.</p></section>` }
+];
+
+function buildSite(v) {
+  const t = THEMES[v.template];
+  const full = v.suffix ? `${v.name} ${v.suffix}` : v.name;
+  const loc = [v.city, v.region].filter(Boolean).join(", ");
+  const locFull = [loc, v.country].filter(Boolean).join(", ");
+  const year = new Date().getFullYear();
+  const tagline = pick(TAGLINES, hash(v.name + v.city));
+  const ctx = { full, locFull, email: v.email };
+  const chosen = PAGES.filter(p => v.pages.includes(p.id));
+  const fileOf = p => p.id + ".html";
+
+  const css = `:root{--bg:${t.bg};--ink:${t.ink};--muted:${t.muted};--accent:${t.accent};--card:${t.card};--line:${t.line}}
+*{box-sizing:border-box}body{margin:0;font:17px/1.65 Georgia,'Times New Roman',serif;background:var(--bg);color:var(--ink)}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+header{border-bottom:1px solid var(--line);padding:22px 0}
+header .wrap{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+.brand{font-weight:700;letter-spacing:.02em;font-size:1.15rem}
+nav a{margin-left:20px;color:var(--muted);text-decoration:none;font:.9rem system-ui,sans-serif}
+nav a:hover{color:var(--accent)}
+.hero{padding:84px 0 64px}
+.hero.small{padding:56px 0 24px}
+.hero h1{font-size:2.4rem;line-height:1.2;margin:0 0 14px}
+.hero p{color:var(--muted);font-size:1.15rem;margin:0}
+section{padding:36px 0;border-top:1px solid var(--line)}
+section h2{font:600 .8rem system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:18px}
+.card h3{margin:0 0 6px;font-size:1.05rem}.card p{margin:0;color:var(--muted);font-size:.95rem}
+a{color:var(--accent)}
+footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--muted);font:.85rem system-ui,sans-serif}
+footer a{margin-right:16px}
+`;
+
+  const nav = chosen.filter(p => p.id !== "privacy" && p.id !== "terms");
+  const legal = chosen.filter(p => p.id === "privacy" || p.id === "terms");
+  const head = title => `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(title)}</title><meta name="description" content="${esc(full)}${locFull ? " — " + esc(locFull) : ""}">
+<link rel="stylesheet" href="styles.css"></head><body>
+<header><div class="wrap"><div class="brand">${esc(full)}</div><nav><a href="index.html">Home</a>${nav.map(p => `<a href="${fileOf(p)}">${esc(p.label)}</a>`).join("")}</nav></div></header>`;
+  const foot = `<footer><div class="wrap">${legal.map(p => `<a href="${fileOf(p)}">${esc(p.label)}</a>`).join("")}<div style="margin-top:${legal.length ? 10 : 0}px">&copy; ${year} ${esc(full)}${locFull ? " &middot; " + esc(locFull) : ""}</div></div></footer></body></html>`;
+
+  const files = {};
+  const hasAbout = v.pages.includes("about");
+  files["index.html"] = head(full) + `
+<div class="wrap"><div class="hero"><h1>${esc(tagline)}</h1><p>${esc(full)}${locFull ? " &middot; " + esc(locFull) : ""}</p></div>
+${hasAbout ? "" : `<section><h2>About</h2><p>${esc(ABOUT[0])}</p></section>`}
+${hasAbout ? `<section><h2>About</h2><p>${esc(ABOUT[0])}</p><p><a href="about.html">Learn more</a></p></section>` : ""}
+<section><h2>Contact</h2><p>For inquiries, write to <a href="mailto:${esc(v.email)}">${esc(v.email)}</a>.</p></section></div>` + foot;
+
+  chosen.forEach(p => {
+    files[fileOf(p)] = head(`${p.title} — ${full}`) + `
+<div class="wrap"><div class="hero small"><h1>${esc(p.title)}</h1></div>${p.body(ctx)}</div>` + foot;
+  });
+  files["styles.css"] = css;
+  files["robots.txt"] = "User-agent: *\nAllow: /\n";
+  return files;
+}
+
+let current = null, activeFile = "index.html";
+const $ = id => document.getElementById(id);
+
+// Build page checkboxes
+$("pages").innerHTML =
+  `<label class="locked"><input type="checkbox" checked disabled> Home</label>` +
+  PAGES.map(p => `<label><input type="checkbox" name="page" value="${p.id}" ${p.def ? "checked" : ""}> ${esc(p.label)}</label>`).join("");
+
+function showFile(name) {
+  activeFile = name;
+  const html = current.files[name].replace('<link rel="stylesheet" href="styles.css">', `<style>${current.files["styles.css"]}</style>`);
+  $("frame").srcdoc = html;
+  [...$("tabs").children].forEach(b => b.classList.toggle("on", b.dataset.f === name));
+}
+
+$("f").addEventListener("submit", e => {
+  e.preventDefault();
+  const v = {
+    name: $("name").value.trim(), city: $("city").value.trim(), region: $("region").value.trim(),
+    country: $("country").value.trim(), email: $("email").value.trim(),
+    template: $("template").value, suffix: $("suffix").value,
+    pages: [...document.querySelectorAll('input[name=page]:checked')].map(i => i.value)
+  };
+  current = { files: buildSite(v), slug: v.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "site" };
+  const htmlFiles = Object.keys(current.files).filter(n => n.endsWith(".html"));
+  $("tabs").innerHTML = htmlFiles.map(n => `<button type="button" data-f="${n}">${n === "index.html" ? "Home" : esc(PAGES.find(p => p.id + ".html" === n).label)}</button>`).join("");
+  [...$("tabs").children].forEach(b => b.addEventListener("click", () => showFile(b.dataset.f)));
+  showFile("index.html");
+  $("frame").hidden = false; $("tabs").hidden = false; $("empty").hidden = true; $("dl").disabled = false;
+  $("deploy").hidden = false;
+  renderDeploy();
+  const fname = `deploy-${current.slug}.sh`;
+  $("dGet").textContent = `Download ${fname}`;
+  $("dRun").textContent = `bash ~/Downloads/${fname}`;
+});
+
+// One-file deploy: wizard + installer + base64 site ZIP, all in a single shell script.
+$("dGet").addEventListener("click", async () => {
+  if (!current) return;
+  const zip = new JSZip();
+  Object.entries(current.files).forEach(([n, c]) => zip.file(n, c));
+  const b64 = await zip.generateAsync({ type: "base64" });
+  const wizard = $("wizard-sh").textContent.replace(/^\n/, "").replace(/__SLUG__/g, current.slug);
+  const remote = $("deploy-sh").textContent.replace(/^\n/, "").replace(/\n$/, "");
+  const text = wizard + "\n#__REMOTE_BEGIN__\n" + remote + "\n#__ZIP_BEGIN__\n" + b64 + "\n";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "text/x-shellscript" }));
+  a.download = `deploy-${current.slug}.sh`; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+$("dRunCopy").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("dRun").textContent); $("dRunCopy").textContent = "Copied"; }
+  catch { $("dRunCopy").textContent = "Select and copy manually"; }
+  setTimeout(() => $("dRunCopy").textContent = "Copy", 1500);
+});
+
+// ---- Deploy panel ----
+const q = s => /^[A-Za-z0-9._@:\/~+-]+$/.test(s) ? String(s) : "'" + String(s).replace(/'/g, "'\\''") + "'";
+const RE_TARGET = /^[A-Za-z0-9._-]+@[A-Za-z0-9.-]+$|^[A-Za-z0-9.-]+$/;
+const RE_DOMAIN = /^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+const RE_EMAIL = /^[^@\s'"]+@[^@\s'"]+\.[^@\s'"]+$/;
+
+function renderDeploy() {
+  if (!current) return;
+  const target = $("dTarget").value.trim(), domain = $("dDomain").value.trim(), email = $("dEmail").value.trim();
+  const ssl = $("dSsl").checked, zip = current.slug + ".zip";
+  const errs = [];
+  if (target && !RE_TARGET.test(target)) errs.push("SSH target looks invalid.");
+  if (domain && !RE_DOMAIN.test(domain)) errs.push("Domain looks invalid.");
+  if (ssl && email && !RE_EMAIL.test(email)) errs.push("Email looks invalid.");
+  $("dErr").hidden = !errs.length; $("dErr").textContent = errs.join(" ");
+  const t = target || "user@your-server", d = domain || "example.com";
+  let remote = `sudo bash deploy.sh -z ${q(zip)} -d ${q(d)}`;
+  if (ssl) remote += ` -e ${q(email || "you@example.com")} -s`;
+  $("dCmd").textContent = `scp ${q(zip)} deploy.sh ${t}:~/\nssh -t ${t} ${q(remote)}`;
+  $("dCopy").disabled = errs.length > 0;
+}
+["dTarget", "dDomain", "dEmail", "dSsl"].forEach(id => $(id).addEventListener("input", renderDeploy));
+$("dCopy").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("dCmd").textContent); $("dCopy").textContent = "Copied"; }
+  catch { $("dCopy").textContent = "Select and copy manually"; }
+  setTimeout(() => $("dCopy").textContent = "Copy commands", 1500);
+});
+$("dScript").addEventListener("click", () => {
+  const blob = new Blob([$("deploy-sh").textContent.replace(/^\n/, "")], { type: "text/x-shellscript" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "deploy.sh"; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+
+$("dl").addEventListener("click", async () => {
+  if (!current) return;
+  const zip = new JSZip();
+  Object.entries(current.files).forEach(([n, c]) => zip.file(n, c));
+  const blob = await zip.generateAsync({ type: "blob" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = current.slug + ".zip"; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+</script>
+</body>
+</html>
