@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Papertiger Site Generator</title>
+<title>Paper Tiger Site Generator</title>
 <style>
   :root { --bg:#f6f7f9; --card:#fff; --ink:#1b1f24; --muted:#5b6570; --line:#dde1e6; --accent:#2b5cff; }
   @media (prefers-color-scheme: dark) {
@@ -54,7 +54,7 @@
 <main>
   <section>
     <form id="f">
-      <h1>Site Generator</h1>
+      <h1>Paper Tiger Site Generator</h1>
       <p class="sub">Answer a few questions. Get a small static landing page.</p>
 
       <label for="name">Company name</label>
@@ -121,7 +121,8 @@
           <div><button type="button" id="dGet">Download deploy file</button></div></li>
         <li>Open <b>Terminal</b> (Mac: press Cmd+Space, type Terminal, press Enter), paste this line, and press Enter:
           <pre id="dRun"></pre>
-          <button type="button" class="secondary" id="dRunCopy" style="margin-left:0">Copy</button></li>
+          <button type="button" class="secondary" id="dRunCopy" style="margin-left:0">Copy</button>
+          <p class="note" style="margin-top:8px">If the command says "No such file", your browser saved the file under another name (for example with " (1)" added) or in another folder. Run <code>ls ~/Downloads/deploy-*</code> to see its real name.</p></li>
         <li>Answer the questions: server address, username, and optionally a domain. Leave the domain blank to get a free test address. When you type a password nothing appears on screen; that is normal.</li>
       </ol>
       <details><summary>Need a server?</summary>

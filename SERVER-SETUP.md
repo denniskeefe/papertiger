@@ -1,6 +1,6 @@
 # Server Setup Guide
 
-A plain-language guide to getting a web server ready for a site made with Papertiger. No prior server experience is needed.
+A plain-language guide to getting a web server ready for a site made with Paper Tiger Site Generator. No prior server experience is needed.
 
 ## What you need
 
@@ -92,4 +92,4 @@ Generate a new site in the app, download the new deploy file, and run it with th
 
 ## Hosting on Vercel instead
 
-Papertiger itself is a static page. To publish the generator on Vercel, import this GitHub repository in the Vercel dashboard. Use the **Other** framework preset, leave the build command empty, and keep the output directory as the repository root. Generated sites can also be uploaded to any static host.
+Paper Tiger Site Generator itself is a static page. To publish the generator on Vercel, import this GitHub repository in the Vercel dashboard. Use the **Other** framework preset, leave the build command empty, and keep the output directory as the repository root. Generated sites can also be uploaded to any static host.

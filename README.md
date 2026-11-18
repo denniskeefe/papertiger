@@ -1,4 +1,4 @@
-# Papertiger
+# Paper Tiger Site Generator
 
 A small, client-side generator for simple static landing pages. Fill in a short form, choose the pages you want, and download a ready-to-host site.
 
