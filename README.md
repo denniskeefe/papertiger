@@ -1,44 +1,94 @@
 # Paper Tiger Site Generator
 
-A small, client-side generator for simple static landing pages. Fill in a short form, choose the pages you want, and download a ready-to-host site.
+A small, client-side generator for simple static landing pages. Fill in a short form, choose the pages you want, preview the result, and either download a ZIP or deploy it to your own Apache server with a single file.
+
+Everything runs in the browser. Nothing you type is uploaded or stored.
 
 ## Features
 
-- Form for company name, location, contact email, style and suffix.
-- Selectable pages: About, Approach, Services, FAQ, Contact, Privacy Policy, Terms of Use.
-- Four visual styles, live preview with page tabs, ZIP download.
-- One-file deploy: a generated `deploy-<name>.sh` that uploads the site to a Debian/Ubuntu Apache server over SSH and can set up HTTPS with Let's Encrypt.
-- Runs entirely in the browser. Nothing is uploaded or stored.
+- **Short form:** company name, city, state/region, country (optional), contact email, name suffix and visual style.
+- **Selectable pages:** About, Approach, Services, FAQ, Contact, Privacy Policy and Terms of Use. Home is always included.
+- **Four styles:** Slate, Sand, Forest and Ink (dark).
+- **Live preview:** click through every generated page before downloading.
+- **ZIP download:** a plain static site (HTML, CSS, `robots.txt`) that works on any static host.
+- **One-file deploy:** download a single `deploy-<name>.sh` that contains the site and the installer. Run it in a terminal, answer a few questions, and it uploads and configures an Apache server over SSH. It can also obtain an HTTPS certificate from Let's Encrypt.
+- **No domain needed to test:** leave the domain blank and the deploy file uses a free `nip.io` test address based on your server's IP.
+
+## What a generated site contains
+
+- **Home:** a tagline, a short welcome, "What we value", "How we work" and a "Get in touch" section. The welcome text and closing line vary with the company name and city.
+- **Optional pages:** only the ones you tick. Navigation and footer links are built to match.
+- **Generic copy only:** every page uses placeholder wording with no specific facts.
 
 ## Content policy
 
-Generated pages use generic placeholder text only. The generator does not create fake testimonials, team members, licenses, certifications, client lists or registration claims, and it does not collect payments. Use it only for lawful, authorized purposes.
+The generator does not create fake testimonials, team members, licenses, certifications, client lists, awards, registration claims or payment forms. It will not be extended to do so. Use it only for lawful, authorized purposes, and do not use it to impersonate a real organization or to mislead people in order to harm them.
 
-## Run locally
+## Quick start
 
-No build step is needed. Open `index.html` in a browser.
+No build step and no dependencies to install. Open `index.html` in a browser.
 
-## Deploy the generator on Vercel
+1. Fill in the form and choose your pages.
+2. Click **Generate** and review the preview.
+3. Click **Download ZIP** to host it yourself, or use the **Put it online** panel to deploy.
 
-1. Push this repository to GitHub.
-2. In Vercel, choose **Add New... > Project** and import the repository.
-3. Framework preset: **Other**. Leave the build command and output directory empty.
-4. Deploy.
+## Deploy to your own server
 
-## Deploy a generated site to your own server
+Requirements: a Debian or Ubuntu server you can reach over SSH, a Mac or Linux computer (or WSL on Windows), and optionally a domain.
 
-See [SERVER-SETUP.md](SERVER-SETUP.md) for a step-by-step guide. In short: generate a site, download the deploy file, run `bash ~/Downloads/deploy-<name>.sh`, and answer the questions.
+1. In **Put it online**, download the deploy file.
+2. In Terminal, run:
 
-`deploy.sh` is the installer that runs on the server. It is embedded into the generated deploy file, and can also be used on its own:
+   ```bash
+   bash ~/Downloads/deploy-<name>.sh
+   ```
+
+3. Answer the prompts: server address, username and optional domain. Enter an email only if you want HTTPS.
+
+If you use a domain, point its DNS A record at the server first. For a beginner-friendly walkthrough, see [SERVER-SETUP.md](SERVER-SETUP.md).
+
+### What the installer does on the server
+
+- Installs Apache (and certbot if you chose HTTPS).
+- Puts the site in `/var/www/<domain>` with safe permissions.
+- Creates an Apache virtual host with directory listing off, no server signature, basic security headers and per-site logs.
+- Reloads Apache. Running it again with the same domain replaces the site.
+
+### Using the installer directly
+
+`deploy.sh` can be used on its own on the server:
 
 ```bash
 sudo ./deploy.sh -z site.zip -d example.com [-e admin@example.com -s]
 ```
 
-## Files
+| Option | Meaning |
+| --- | --- |
+| `-z` | Path to the site ZIP (required) |
+| `-d` | Domain to serve (required) |
+| `-e` | Email for Let's Encrypt (required with `-s`) |
+| `-s` | Get and install an HTTPS certificate |
+
+## Deploy the generator itself on Vercel
+
+1. In Vercel, choose **Add New... > Project** and import this repository.
+2. Set the framework preset to **Other**. Leave the build command and output directory empty.
+3. Deploy.
+
+The whole repository is served as a static site.
+
+## Project files
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | The whole app (form, generator, deploy-file builder) |
+| `index.html` | The whole app: form, site generator, preview and deploy-file builder |
 | `deploy.sh` | Server-side installer for Apache on Debian/Ubuntu |
 | `SERVER-SETUP.md` | Beginner guide to servers, domains and deploying |
+
+A copy of `deploy.sh` is embedded in `index.html` so the app can build the one-file deploy. If you change `deploy.sh`, update the embedded copy as well.
+
+## Limitations
+
+- The browser cannot SSH into a server, so deployment always happens through the downloaded file in your own terminal.
+- The deploy file supports Debian and Ubuntu with Apache only.
+- Generated pages are intentionally simple and carry no analytics, forms or scripts.
