@@ -356,6 +356,24 @@ const FAQ = [
   ["Do you accept unsolicited proposals?", "We review them, but cannot reply to every one."]
 ];
 
+// Extra home-page copy. Still generic: no figures, no clients, no credentials.
+const INTROS = [
+  "We are a small firm that prefers to let the work speak for itself. Each engagement is approached with care, and every relationship is handled with discretion.",
+  "Our practice is built on careful listening and steady follow-through. We take on a limited number of engagements so that each one gets proper attention.",
+  "We help partners think through complex questions and move forward with confidence. Our work is quiet, focused, and tailored to the situation at hand.",
+  "We believe good work starts with good questions. That is why we take the time to understand each situation before we recommend a path."
+];
+const STEPS = [
+  ["1. Listen", "We begin by understanding the question being asked and the context around it."],
+  ["2. Plan", "Together we agree on a scope, a timeline, and how we will communicate."],
+  ["3. Deliver", "We follow through and keep you informed along the way."]
+];
+const CLOSERS = [
+  "If you think we might be a good fit, we would be glad to hear from you.",
+  "Introductions are welcome. A short note is the best way to start.",
+  "To discuss a possible engagement, please reach out by email."
+];
+
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pick = (arr, seed) => arr[seed % arr.length];
 const hash = s => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
@@ -379,7 +397,8 @@ function buildSite(v) {
   const loc = [v.city, v.region].filter(Boolean).join(", ");
   const locFull = [loc, v.country].filter(Boolean).join(", ");
   const year = new Date().getFullYear();
-  const tagline = pick(TAGLINES, hash(v.name + v.city));
+  const seed = hash(v.name + v.city);
+  const tagline = pick(TAGLINES, seed);
   const ctx = { full, locFull, email: v.email };
   const chosen = PAGES.filter(p => v.pages.includes(p.id));
   const fileOf = p => p.id + ".html";
@@ -419,9 +438,10 @@ footer a{margin-right:16px}
   const hasAbout = v.pages.includes("about");
   files["index.html"] = head(full) + `
 <div class="wrap"><div class="hero"><h1>${esc(tagline)}</h1><p>${esc(full)}${locFull ? " &middot; " + esc(locFull) : ""}</p></div>
-${hasAbout ? "" : `<section><h2>About</h2><p>${esc(ABOUT[0])}</p></section>`}
-${hasAbout ? `<section><h2>About</h2><p>${esc(ABOUT[0])}</p><p><a href="about.html">Learn more</a></p></section>` : ""}
-<section><h2>Contact</h2><p>For inquiries, write to <a href="mailto:${esc(v.email)}">${esc(v.email)}</a>.</p></section></div>` + foot;
+<section><h2>Welcome</h2><p>${esc(pick(INTROS, seed))}</p>${hasAbout ? `<p><a href="about.html">Learn more about us</a></p>` : ""}</section>
+<section><h2>What we value</h2>${cards(VALUES)}</section>
+<section><h2>How we work</h2>${cards(STEPS)}</section>
+<section><h2>Get in touch</h2><p>${esc(pick(CLOSERS, seed >> 3))}</p><p>Write to <a href="${v.pages.includes("contact") ? "contact.html" : "mailto:" + esc(v.email)}">${v.pages.includes("contact") ? "our contact page" : esc(v.email)}</a>${v.pages.includes("contact") ? "" : "."}</p></section></div>` + foot;
 
   chosen.forEach(p => {
     files[fileOf(p)] = head(`${p.title} — ${full}`) + `
