@@ -20,6 +20,13 @@ Everything runs in the browser. Nothing you type is uploaded or stored.
 - **Optional pages:** only the ones you tick. Navigation and footer links are built to match.
 - **Generic copy only:** every page uses placeholder wording with no specific facts.
 
+## Use cases and responsible use
+
+- **Investigator opsec:** in authorized investigations, a contact address on a domain with no web presence is easy to dismiss or flag. A plain, generic landing page keeps research infrastructure separate from your real identity and employer, and gives a basic domain check something neutral to find. It is a thin layer, not anonymity. Use separate accounts, payments and hosting, and expect a determined person to see through it.
+- **Authorized security testing:** red teams and researchers can use it for pretext infrastructure on engagements with written authorization and a defined scope.
+- **Learning to spot thin fronts:** trust and safety staff, journalists and disinformation researchers can generate a page to see how little it takes to look superficially legitimate. Typical tells are generic copy, no verifiable people or registration, a recent domain, and no independent footprint.
+- **Not for:** impersonating a real organization, inventing credentials, clients or reviews, deceiving people to cause harm, fraud, phishing, or running disinformation campaigns. These uses are outside the purpose of this tool and may be illegal. Check your local laws on pretexting and the terms of any platform you use.
+
 ## Content policy
 
 The generator does not create fake testimonials, team members, licenses, certifications, client lists, awards, registration claims or payment forms. It will not be extended to do so. Use it only for lawful, authorized purposes, and do not use it to impersonate a real organization or to mislead people in order to harm them.
