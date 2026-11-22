@@ -101,6 +101,11 @@
         <div class="pages" id="pages"></div>
       </fieldset>
 
+      <label for="canary">Canary tripwire <small>(optional)</small></label>
+      <input id="canary" maxlength="300" placeholder="https://canarytokens.com/…" spellcheck="false">
+      <p class="note" style="margin-top:4px">Paste an HTTP Canarytoken URL you created at <a href="https://canarytokens.org" target="_blank" rel="noopener">canarytokens.org</a>. The site gets a hidden honeypot page (linked only from <code>robots.txt</code> and the page source) that notifies you if someone goes looking. Normal visitors never see it, and nothing about them is collected.</p>
+      <div id="canaryErr" class="err" hidden>Enter a valid Canarytoken URL (canarytokens.com or canarytokens.org), or leave it blank.</div>
+
       <button type="submit">Generate</button>
       <button type="button" class="secondary" id="dl" disabled>Download ZIP</button>
 
@@ -384,6 +389,10 @@ const CLOSERS = [
   "To discuss a possible engagement, please reach out by email."
 ];
 
+// Only accept hosted Canarytoken URLs; the generator builds the markup itself so
+// the field can never inject arbitrary HTML or script into the output.
+const RE_CANARY = /^https?:\/\/([a-z0-9-]+\.)*canarytokens\.(com|org)\/[^\s"'<>]*$/i;
+
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pick = (arr, seed) => arr[seed % arr.length];
 const hash = s => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
@@ -459,7 +468,34 @@ footer a{margin-right:16px}
   });
   files["styles.css"] = css;
   files["robots.txt"] = "User-agent: *\nAllow: /\n";
+
+  // Optional canary tripwire: a hidden honeypot page that loads the token.
+  // It is reachable only via a robots.txt Disallow lure and a non-rendered link
+  // in the home page source, so an ordinary visitor never encounters it.
+  if (v.canary) {
+    files["private/index.html"] = honeypot(v.canary, full, t);
+    files["robots.txt"] = "User-agent: *\nAllow: /\nDisallow: /private/\n";
+    files["index.html"] = files["index.html"].replace(
+      "</body></html>",
+      `<!-- internal, do not index --><a href="private/" style="display:none" aria-hidden="true" tabindex="-1">internal</a></body></html>`
+    );
+  }
   return files;
+}
+
+// Hidden honeypot page. The CANARY_BEGIN/END markers let the live preview strip
+// the token so reviewing the site locally never fires the operator's own alert.
+function honeypot(canaryUrl, full, t) {
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Restricted — ${esc(full)}</title>
+<style>body{margin:0;font:17px/1.65 Georgia,'Times New Roman',serif;background:${t.bg};color:${t.ink}}
+.wrap{max-width:640px;margin:0 auto;padding:80px 20px}h1{font-size:1.9rem;margin:0 0 14px}
+p{color:${t.muted}}a{color:${t.accent}}</style></head><body>
+<!-- CANARY_BEGIN --><img src="${esc(canaryUrl)}" alt="" width="1" height="1" referrerpolicy="no-referrer" style="position:absolute;left:-9999px;top:-9999px"><!-- CANARY_END -->
+<div class="wrap"><h1>Restricted area</h1>
+<p>This area is for internal use only. If you reached this page by mistake, please return to the <a href="../index.html">home page</a>.</p></div>
+</body></html>`;
 }
 
 let current = null, activeFile = "index.html";
@@ -470,24 +506,41 @@ $("pages").innerHTML =
   `<label class="locked"><input type="checkbox" checked disabled> Home</label>` +
   PAGES.map(p => `<label><input type="checkbox" name="page" value="${p.id}" ${p.def ? "checked" : ""}> ${esc(p.label)}</label>`).join("");
 
+const tabLabel = n => n === "index.html" ? "Home"
+  : n === "private/index.html" ? "Honeypot (tripwire)"
+  : esc(PAGES.find(p => p.id + ".html" === n).label);
+
 function showFile(name) {
   activeFile = name;
-  const html = current.files[name].replace('<link rel="stylesheet" href="styles.css">', `<style>${current.files["styles.css"]}</style>`);
+  let src = current.files[name];
+  // Keep the tripwire inert in the preview so reviewing the site never fires an alert.
+  if (name === "private/index.html") {
+    src = src.replace(/<!-- CANARY_BEGIN -->[\s\S]*?<!-- CANARY_END -->/, "<!-- tripwire is inactive in this preview; it is live only in the downloaded or deployed site -->");
+  }
+  const html = src.replace('<link rel="stylesheet" href="styles.css">', `<style>${current.files["styles.css"]}</style>`);
   $("frame").srcdoc = html;
   [...$("tabs").children].forEach(b => b.classList.toggle("on", b.dataset.f === name));
 }
 
 $("f").addEventListener("submit", e => {
   e.preventDefault();
+  const canary = $("canary").value.trim();
+  if (canary && !RE_CANARY.test(canary)) {
+    $("canaryErr").hidden = false;
+    $("canary").focus();
+    return;
+  }
+  $("canaryErr").hidden = true;
   const v = {
     name: $("name").value.trim(), city: $("city").value.trim(), region: $("region").value.trim(),
     country: $("country").value.trim(), email: $("email").value.trim(),
     template: $("template").value, suffix: $("suffix").value,
+    canary,
     pages: [...document.querySelectorAll('input[name=page]:checked')].map(i => i.value)
   };
   current = { files: buildSite(v), slug: v.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "site" };
   const htmlFiles = Object.keys(current.files).filter(n => n.endsWith(".html"));
-  $("tabs").innerHTML = htmlFiles.map(n => `<button type="button" data-f="${n}">${n === "index.html" ? "Home" : esc(PAGES.find(p => p.id + ".html" === n).label)}</button>`).join("");
+  $("tabs").innerHTML = htmlFiles.map(n => `<button type="button" data-f="${n}">${tabLabel(n)}</button>`).join("");
   [...$("tabs").children].forEach(b => b.addEventListener("click", () => showFile(b.dataset.f)));
   showFile("index.html");
   $("frame").hidden = false; $("tabs").hidden = false; $("empty").hidden = true; $("dl").disabled = false;
