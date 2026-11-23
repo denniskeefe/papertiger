@@ -1,0 +1,11 @@
+{
+  "name": "papertiger-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "smoke": "node smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.49.1"
+  }
+}

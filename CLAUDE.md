@@ -1,0 +1,2 @@
+- `index.html` embeds `deploy.sh` verbatim (`#deploy-sh` block). Edit `deploy.sh`, then run `python3 scripts/embedded.py sync`.
+- Verify changes with `bash scripts/check.sh` (sync check, shell syntax, shellcheck, Playwright smoke test in `tests/smoke.mjs`).
